@@ -39,21 +39,15 @@ class Share {
 
     for (let count = 1; count <= this.shareCount; count++) {
       try {
-        const res = await axios.post(
+        await axios.post(
           `https://b-graph.facebook.com/me/feed?link=${encodeURIComponent(this.post)}&published=0&access_token=${token}`,
           {},
           { headers: this.headers }
         );
-        if (!res.data.id) throw new Error('Blocked or invalid response');
-      } catch (err) {
-        console.error(`❌ Share failed at #${count}: ${err.message}`);
+      } catch {
         break;
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 8000)); // 8-second delay
     }
-
-    console.log(`[✅] Done processing ${this.shareCount} shares.`);
   }
 }
 
@@ -69,19 +63,16 @@ app.get('/share', async (req, res) => {
   try {
     const token = await share.getToken();
 
-    setImmediate(() => {
-      share.startBackgroundShare(token);
+    setImmediate(async () => {
+      await share.startBackgroundShare(token);
     });
 
-    res.json({
-      message: `Sharing process started for ${amount} shares. This will run in background.`,
-      author: 'churchilli'
-    });
+    res.json({ message: 'Sharing started', author: 'churchilli' });
   } catch (err) {
     res.status(500).json({ error: err.message, author: 'churchilli' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`🔥 API running on port ${port}`);
+  console.log(`API running on port ${port}`);
 });
