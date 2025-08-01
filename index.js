@@ -67,7 +67,7 @@ app.get('/share', async (req, res) => {
   const { cookie, link, amount } = req.query;
 
   if (!cookie || !link || !amount || !link.startsWith('http')) {
-    return res.status(400).json({ error: 'Invalid input', author: 'sichilli' });
+    return res.status(400).json({ error: 'Invalid input', author: 'churchilli' });
   }
 
   const share = new Share(cookie, link, parseInt(amount, 10));
