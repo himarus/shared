@@ -32,12 +32,10 @@ class Share {
     return 'EAAG' + match[1];
   }
 
-  async share(token) {
+  async startBackgroundShare(token) {
     this.headers['accept-encoding'] = 'gzip, deflate';
     this.headers['host'] = 'b-graph.facebook.com';
     this.headers['cookie'] = this.cookie;
-
-    const results = [];
 
     for (let count = 1; count <= this.shareCount; count++) {
       try {
@@ -46,20 +44,16 @@ class Share {
           {},
           { headers: this.headers }
         );
-
-        if (res.data.id) {
-          results.push({ count, status: 'success' });
-        } else {
-          results.push({ count, status: 'cookie_invalid' });
-          break;
-        }
+        if (!res.data.id) throw new Error('Blocked or invalid response');
       } catch (err) {
-        results.push({ count, status: 'error', message: err.message });
+        console.error(`❌ Share failed at #${count}: ${err.message}`);
         break;
       }
+
+      await new Promise((resolve) => setTimeout(resolve, 8000)); // 8-second delay
     }
 
-    return results;
+    console.log(`[✅] Done processing ${this.shareCount} shares.`);
   }
 }
 
@@ -74,13 +68,20 @@ app.get('/share', async (req, res) => {
 
   try {
     const token = await share.getToken();
-    const results = await share.share(token);
-    res.json({ results, author: 'churchilli' });
+
+    setImmediate(() => {
+      share.startBackgroundShare(token);
+    });
+
+    res.json({
+      message: `Sharing process started for ${amount} shares. This will run in background.`,
+      author: 'churchilli'
+    });
   } catch (err) {
     res.status(500).json({ error: err.message, author: 'churchilli' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`API running on port ${port}`);
+  console.log(`🔥 API running on port ${port}`);
 });
