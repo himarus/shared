@@ -32,22 +32,34 @@ class Share {
     return 'EAAG' + match[1];
   }
 
-  async startBackgroundShare(token) {
+  async share(token) {
     this.headers['accept-encoding'] = 'gzip, deflate';
     this.headers['host'] = 'b-graph.facebook.com';
     this.headers['cookie'] = this.cookie;
 
+    const results = [];
+
     for (let count = 1; count <= this.shareCount; count++) {
       try {
-        await axios.post(
+        const res = await axios.post(
           `https://b-graph.facebook.com/me/feed?link=${encodeURIComponent(this.post)}&published=0&access_token=${token}`,
           {},
           { headers: this.headers }
         );
-      } catch {
+
+        if (res.data.id) {
+          results.push({ count, status: 'success' });
+        } else {
+          results.push({ count, status: 'cookie_invalid' });
+          break;
+        }
+      } catch (err) {
+        results.push({ count, status: 'error', message: err.message });
         break;
       }
     }
+
+    return results;
   }
 }
 
@@ -55,19 +67,15 @@ app.get('/share', async (req, res) => {
   const { cookie, link, amount } = req.query;
 
   if (!cookie || !link || !amount || !link.startsWith('http')) {
-    return res.status(400).json({ error: 'Invalid input', author: 'churchilli' });
+    return res.status(400).json({ error: 'Invalid input', author: 'sichilli' });
   }
 
   const share = new Share(cookie, link, parseInt(amount, 10));
 
   try {
     const token = await share.getToken();
-
-    setImmediate(async () => {
-      await share.startBackgroundShare(token);
-    });
-
-    res.json({ message: 'Sharing started', author: 'churchilli' });
+    const results = await share.share(token);
+    res.json({ results, author: 'churchilli' });
   } catch (err) {
     res.status(500).json({ error: err.message, author: 'churchilli' });
   }
