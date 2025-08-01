@@ -77,7 +77,7 @@ app.get('/share', async (req, res) => {
     const results = await share.share(token);
     res.json({ results, author: 'churchilli' });
   } catch (err) {
-    res.status(500).json({ error: err.message, author: 'sichilli' });
+    res.status(500).json({ error: err.message, author: 'churchilli' });
   }
 });
 
