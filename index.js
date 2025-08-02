@@ -85,16 +85,3 @@ app.get('/share', async (req, res) => {
 app.listen(port, () => {
   console.log(`🔥 API running on port ${port}`);
 });
-    setImmediate(async () => {
-      await share.startBackgroundShare(token);
-    });
-
-    res.json({ message: 'Sharing started', author: 'churchilli' });
-  } catch (err) {
-    res.status(500).json({ error: err.message, author: 'churchilli' });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`API running on port ${port}`);
-});
